@@ -1,4 +1,5 @@
 import json
+import random
 from datetime import datetime
 from hashlib import sha256
 
@@ -9,25 +10,28 @@ class Blockchain(object):
         self.chain = []  # начальнуя пустая цепочка списков (для хранения цепочки блоков)
         self.pending_transactions = []  # список задержанных транзакций
         # Создает блок генезиса
-        print("Creating genesis block")
+        print("Создание блока Генезиса")
         self.new_block()
 
-    def new_block(self, previous_hash=None):  # Генерирует новый блок и добавляет его в цепь
-        block: dict = {'index': len(self.chain), 'timestamp': datetime.utcnow().isoformat(),
-                       'transactions': self.pending_transactions, 'previous_hash': previous_hash,
-                       'nonce': None}
+    def new_block(self):  # Генерирует новый блок и добавляет его в цепь
+        block: dict = {'index': len(self.chain),
+                       'timestamp': datetime.utcnow().isoformat(),
+                       'transactions': self.pending_transactions,
+                       'previous_hash': self.last_block()["hash"] if self.last_block() else None,
+                       'nonce': format(random.getrandbits(64), "x")}
         # Возвращает хэш этого нового блока и добавляет его в блок
         block_hash = self.hash(block)
         block["hash"] = block_hash
         # Сбрасывает список незавершенных транзакций
         self.pending_transactions = []
         # Добавляет блок в цепочку
-        self.chain.append(block)
-        print(f"Created block {block['index']}")
+        # self.chain.append(block)
+        # print(f"Создан блок {block['index']}")
         return block
 
     @staticmethod
     def hash(block):  # Хэширование (sha256 дайджест) блока, который в json формате
+        # словарь отсортирован, иначе у нас будут несогласованные хэши
         block_string: bytes = json.dumps(block, sort_keys=True).encode()
         return sha256(block_string).hexdigest()
 
@@ -39,9 +43,14 @@ class Blockchain(object):
             "recipient": recipient, "sender": sender, "amount": amount,
         })
 
-    def proof_of_work(self):
-        pass
+    def proof_of_work(self): # генерируем блоки, пока не получим хэш с 4-мя нулями в начале
+        while True:
+            new_block = self.new_block()
+            if self.valid_hash(new_block):
+                break
+        self.chain.append(new_block) # Интересная область видимости в пайтоне xD
+        print("Добыт новый блок: ", new_block)
 
-    def valid_hash(self):
-        pass
-
+    @staticmethod
+    def valid_hash(block: dict): # Проверка хэша на нули в начале
+        return block["hash"].startswith("0000")

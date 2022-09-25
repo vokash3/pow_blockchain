@@ -14,7 +14,8 @@ class Blockchain(object):
 
     def new_block(self, previous_hash=None):  # Генерирует новый блок и добавляет его в цепь
         block: dict = {'index': len(self.chain), 'timestamp': datetime.utcnow().isoformat(),
-                       'transactions': self.pending_transactions, 'previous_hash': previous_hash, }
+                       'transactions': self.pending_transactions, 'previous_hash': previous_hash,
+                       'nonce': None}
         # Возвращает хэш этого нового блока и добавляет его в блок
         block_hash = self.hash(block)
         block["hash"] = block_hash
@@ -37,3 +38,10 @@ class Blockchain(object):
         self.pending_transactions.append({
             "recipient": recipient, "sender": sender, "amount": amount,
         })
+
+    def proof_of_work(self):
+        pass
+
+    def valid_hash(self):
+        pass
+
